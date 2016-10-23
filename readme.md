@@ -1,5 +1,5 @@
 # nodeChat
-a chat client written in nodejs
+a webchat written in nodejs
 
 # Using modules
 * express
