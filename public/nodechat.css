@@ -1,0 +1,171 @@
+:root {
+    --userbg:#222;
+    --chatbg:#222;
+    --messagebg:#333;
+    --chatcolour:#eee;
+    --servercolour:#999;
+    --inputbg:#333;
+    --buttonbg:#222;
+
+    --typingbg:#111;
+    --formbg:#eee;
+
+    --userwidth:200px;
+    --messageheight:60px;
+
+    --typingheight:20px;
+
+    --sendwidth:100px;
+
+    --clientnameheight:60px;
+
+    --font:arial;
+}
+
+body {
+    font-family: var(--font);
+    font-size:17px;
+    margin:0px;
+    padding:0px;
+}
+
+input {
+    font-family: var(--font);
+    font-size:15px;
+    box-sizing: border-box;
+    background-color:var(--inputbg);
+    border-width:0px;
+    color:var(--chatcolour);
+    padding-left:5px;
+    padding-right:5px;
+}
+button {
+    font-family: var(--font);
+    font-weight:bold;
+    font-size:15px;
+    box-sizing: border-box;
+    background-color:var(--buttonbg);
+    border-width:0px;
+    color:var(--chatcolour);
+}
+
+#users {
+    width:var(--userwidth);
+    height:calc(100% - var(--messageheight));
+    right:0px;
+    top:0px;
+    position:absolute;
+    background-color:var(--userbg);
+    display:inline-block;
+}
+#usernames {
+    height:calc(100% - var(--clientnameheight));
+    left:0px;
+    top:0px;
+    position:relative;
+    padding:5px;
+    color:var(--chatcolour);
+    overflow-y:scroll;
+    overflow-x:hidden;
+
+}
+#userclient {
+    width:100%;
+    height:var(--clientnameheight);
+    left:0px;
+    bottom:0px;
+    position:relative;
+    color:var(--chatcolour);
+}
+#clientname {
+    width:100%;
+    padding:5px;
+}
+
+.chatmessage {
+    color:var(--chatcolour);
+}
+
+.servermessage {
+    color:var(--servercolour);
+}
+
+.chatline {
+    max-width:calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#chat {
+    width:calc(100% - var(--userwidth));
+    height:calc(100% - var(--messageheight));
+    left:0px;
+    top:0px;
+    background-color: var(--chatbg);
+    position:absolute;
+    padding:0px;
+    overflow-y:scroll;
+    overflow-x:hidden;
+}
+
+#messages {
+    top:0px;
+    left:0px;
+    width:100%;
+    position:relative;
+    padding:10px;
+    display:inline-block;
+    overflow-x:hidden;
+}
+
+#message {
+    width:100%;
+    height:var(--messageheight);
+    left:0px;
+    bottom:0px;
+    position:absolute;
+    background-color: var(--messagebg);
+}
+
+#messagetyping {
+    position:relative;
+    left:0px;
+    top:0px;
+    width:100%;
+    height:var(--typingheight);
+    background-color: var(--typingbg);
+    font-size:12px;
+    color:var(--servercolour);
+}
+
+#messageform {
+    position:relative;
+    left:0px;
+    top:(var(--typingheight));
+    width:100%;
+    height:calc(100% - var(--typingheight));
+}
+
+#formfield {
+    position:absolute;
+    left:0px;
+    top:0px;
+    width:calc(100% - var(--sendwidth));
+    height:100%;
+}
+#formbutton {
+    position:absolute;
+    top:0px;
+    right:0px;
+    width:var(--sendwidth);
+    height:100%;
+}
+
+#formtext {
+    width:100%;
+    height:100%;
+}
+#formsend {
+    width:100%;
+    height:100%;
+}

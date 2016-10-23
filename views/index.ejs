@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= title %></title>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="jquery-1.12.4.min.js"></script>
+    <link href="nodechat.css" type="text/css" rel="stylesheet" />
+</head>
+<body>
+
+<div id="users">
+    <div id="usernames"></div>
+    <div id="userclient">
+        <div>You're chatting as</div>
+        <div>
+            <input type="text" id="clientname" maxlength="20">
+        </div>
+    </div>
+</div>
+<div id="message">
+    <div id="messagetyping"></div>
+    <div id="messageform">
+        <div id="formfield">
+            <input type="text" id="formtext" placeholder="Say something." maxlength="500">
+        </div>
+        <div id="formbutton">
+            <button id="formsend">Send</button>
+        </div>
+    </div>
+</div>
+<div id="chat">
+    <div id="messages"></div>
+</div>
+
+
+
+<script src="nodechat.js"></script>
+</body>
+</html>
