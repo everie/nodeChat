@@ -16,7 +16,12 @@ var port = 3000;
 
 var users = [];
 var active = [];
+var log = [];
 
+var logSize = 50;
+
+var standardName = 'Stranger';
+var serverName = 'Server';
 var nameIterator = 0;
 
 app.get('/', function(req, res) {
@@ -39,34 +44,57 @@ io.on('connection', function(client) {
 
     // HANDLING DISCONNECTS
     client.on('disconnect', function(){
+        //console.log('leaving: ' + client.id);
+        announceUser(client, getUserByClientId(client.id), false);
+
         removeUser(client.id);
         updateUsers(client);
-        announceUser(client, user, false);
+        cleanActive(client);
     });
 
-    nameIterator++;
+    // WHEN CLIENT IS READY TO BE UPDATED
+    client.on('readyEvent', function(data) {
+        var userName = '';
 
-    // HANDLING CONNECTS
-    var user = {
-      id: client.id,
-      name: 'noob' + nameIterator
-    };
+        if (data.name === undefined) {
+            nameIterator++;
+            userName = standardName + ('00' + nameIterator).slice(-3);
+        } else {
+            userName = data.name;
+        }
 
-    users.push(user);
+        // HANDLING CONNECTS
+        var user = {
+            id: client.id,
+            name: userName
+        };
 
-    // HANDLING CLIENT/SERVER COMMUNICATION
-    emitName(client);
+        users.push(user);
 
-    client.emit('chatEvent', {name: 'Server', message: 'Welcome to nodeChat! There are currently ' + users.length + ' users online.'});
+        // HANDLING CLIENT/SERVER COMMUNICATION
+        emitName(client);
+
+        for (let entry of log) {
+            client.emit('chatEvent', entry);
+        }
+        client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: 'Welcome to nodeChat! There are currently ' + users.length + ' users online.'});
+
+        updateUsers(client);
+        announceUser(client, user, true);
+    });
 
     // FROM CLIENTS
     client.on('messageEvent', function(data) {
-        client.emit('chatEvent', {name: getNameFromClientId(client.id), message: data.message});
-        client.broadcast.emit('chatEvent', {name: getNameFromClientId(client.id), message: data.message});
+        var name = getName(client);
+        var messageObj = {type: 'chat', timestamp: getTimestamp(), name: name, message: data.message};
+        client.emit('chatEvent', messageObj);
+        client.broadcast.emit('chatEvent', messageObj);
+
+        updateLog({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
     });
 
     client.on('nameEvent', function(data) {
-        var oldName = getNameFromClientId(client.id);
+        var oldName = getName(client);
         changeClientName(client, data.name);
         emitName(client);
         updateUsers(client);
@@ -74,16 +102,20 @@ io.on('connection', function(client) {
         if (newName.trim() === '') {
             newName = client.id;
         }
-        client.emit('chatEvent', {name: 'Server', message: oldName + ' changed name to ' + newName + '.'});
-        client.broadcast.emit('chatEvent', {name: 'Server', message: oldName + ' changed name to ' + newName + '.'});
+        client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
+        client.broadcast.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
     });
 
     client.on('typeEvent', function(data) {
         if (data.typing) {
-            active.push(client.id);
+            active.push({
+                id: client.id,
+                name: getName(client)
+            });
+            cleanActive(client);
         } else {
             for (var i = 0; i < active.length; i++) {
-                var id = active[i];
+                var id = active[i].id;
                 if (id === client.id) {
                     active.splice(i, 1);
                     break;
@@ -91,46 +123,66 @@ io.on('connection', function(client) {
             }
         }
 
-        announceUsersTyping(client);
+        client.emit('activeEvent', active);
+        client.broadcast.emit('activeEvent', active);
     });
-
-    updateUsers(client);
-    announceUser(client, user, true);
 
 });
 
-function announceUsersTyping(client) {
-    var activePeople = '';
-    var activeCount = active.length;
-    if (activeCount > 0) {
-        for (var i = 0; i < activeCount; i++) {
-            if (i > 0) {
-                activePeople += ', ';
-            }
-            activePeople += getNameFromClientId(active[i]);
+function cleanActive(client) {
+    for (var i = 0; i < active.length; i++) {
+        var user = active[i];
+        if (user.name === 'gone' || userLeft(user)) {
+            active.splice(i, 1);
         }
-        activePeople += ' is typing...';
     }
-    client.emit('activeEvent', activePeople);
-    client.broadcast.emit('activeEvent', activePeople);
+
+    client.emit('activeEvent', active);
+    client.broadcast.emit('activeEvent', active);
+}
+
+function userLeft(user) {
+    for (let online of users) {
+        if (online.id === user.id) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function getName(client) {
+    //console.log(client.id);
+    return trimClientName(getUserByClientId(client.id));
+}
+
+function updateLog(obj) {
+    if (log.length > logSize) {
+        log.pop();
+    }
+    log.push(obj);
 }
 
 function emitName(client) {
     client.emit('clientName', {
-        name: getNameFromClientId(client.id),
+        name: getName(client),
         id: client.id
     });
 }
 
-function getNameFromClientId(clientId) {
+function getUserByClientId(clientId) {
     for (let client of users) {
         if (client.id === clientId) {
-            if (client.name.trim() === '') {
-                return client.id;
-            }
-            return client.name;
+            return client;
         }
     }
+    return {name: 'gone'};
+}
+
+function trimClientName(client) {
+    if (client.name.trim() === '') {
+        return client.id;
+    }
+    return client.name;
 }
 
 function changeClientName(client, name) {
@@ -153,7 +205,16 @@ function announceUser(client, user, joined) {
         joinLeave = "left";
     }
 
-    client.broadcast.emit('chatEvent', {name: 'Server', message: 'User ' + user.name + ' has ' + joinLeave + " the chat."});
+    if (user.id !== undefined) {
+        client.broadcast.emit('chatEvent', {
+            type: 'server',
+            timestamp: getTimestamp(),
+            name: serverName,
+            message: user.name + ' has ' + joinLeave + ' the chat.'
+        });
+    } else {
+        console.log(getTimestamp() + ' withholding announce... name: ' + user.name + ', id: ' + client.id);
+    }
 }
 
 function removeUser(clientId) {
@@ -165,10 +226,18 @@ function removeUser(clientId) {
         }
     }
     for (var i = 0; i < active.length; i++) {
-        var userId = active[i];
-        if (userId === clientId) {
+        var user = active[i];
+        if (user.id === clientId) {
             active.splice(i, 1);
             break;
         }
     }
+}
+
+function getTimestamp() {
+    var time = new Date();
+    var timestamp = ("0" + time.getHours()).slice(-2) + ":" +
+        ("0" + time.getMinutes()).slice(-2) + ":" +
+        ("0" + time.getSeconds()).slice(-2);
+    return timestamp;
 }

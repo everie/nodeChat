@@ -2,10 +2,14 @@
     --userbg:#222;
     --chatbg:#222;
     --messagebg:#333;
+    --mycolour:#fff;
+    --othercolour:#ddd;
     --chatcolour:#eee;
     --servercolour:#999;
+    --logcolour:#666;
     --inputbg:#333;
     --buttonbg:#222;
+    --linkcolour:#fff;
 
     --typingbg:#111;
     --formbg:#eee;
@@ -22,11 +26,17 @@
     --font:arial;
 }
 
+a {
+    color:var(--linkcolour);
+}
+
 body {
     font-family: var(--font);
     font-size:17px;
     margin:0px;
     padding:0px;
+    overflow-x:hidden;
+    overflow-y:hidden;
 }
 
 input {
@@ -38,6 +48,7 @@ input {
     color:var(--chatcolour);
     padding-left:5px;
     padding-right:5px;
+    outline: none;
 }
 button {
     font-family: var(--font);
@@ -67,6 +78,7 @@ button {
     color:var(--chatcolour);
     overflow-y:scroll;
     overflow-x:hidden;
+    font-size:14px;
 
 }
 #userclient {
@@ -90,8 +102,22 @@ button {
     color:var(--servercolour);
 }
 
+.logmessage {
+    color:var(--logcolour);
+}
+
+.myclient {
+    color:var(--mycolour);
+    font-weight: bold;
+}
+
+.otherclients {
+    color:var(--othercolour);
+}
+
 .chatline {
     max-width:calc(100% - 20px);
+
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -133,9 +159,12 @@ button {
     top:0px;
     width:100%;
     height:var(--typingheight);
+    line-height:var(--typingheight);
     background-color: var(--typingbg);
     font-size:12px;
     color:var(--servercolour);
+    padding-left:5px;
+    padding-right:5px;
 }
 
 #messageform {
