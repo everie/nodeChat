@@ -8,9 +8,19 @@ var app = express();
 var http = require('http').createServer(app);
 var fs = require('fs');
 var io = require('socket.io').listen(http);
+var BodyParser = require('body-parser');
+
+var api = require('./api/mongo.js');
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+
+app.use(BodyParser.urlencoded({
+    extended: true
+}));
+app.use(BodyParser.json());
+
+app.use(api.routes);
 
 var port = 3000;
 
@@ -69,15 +79,25 @@ io.on('connection', function(client) {
             name: userName
         };
 
+        api.addUser({name: userName});
+
         users.push(user);
 
         // HANDLING CLIENT/SERVER COMMUNICATION
         emitName(client);
 
+        /*
         for (let entry of log) {
             client.emit('chatEvent', entry);
         }
-        client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: 'Welcome to nodeChat! There are currently ' + users.length + ' users online.'});
+        */
+
+        api.getLog(function(data) {
+            for (let entry of data) {
+                client.emit('chatEvent', entry);
+            }
+            client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: 'Welcome to nodeChat! There are currently ' + users.length + ' users online.'});
+        });
 
         updateUsers(client);
         announceUser(client, user, true);
@@ -90,6 +110,7 @@ io.on('connection', function(client) {
         client.emit('chatEvent', messageObj);
         client.broadcast.emit('chatEvent', messageObj);
 
+        api.addHistory({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
         updateLog({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
     });
 
@@ -102,6 +123,7 @@ io.on('connection', function(client) {
         if (newName.trim() === '') {
             newName = client.id;
         }
+        api.addUser({name: newName});
         client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
         client.broadcast.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
     });
