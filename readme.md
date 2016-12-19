@@ -5,6 +5,8 @@ a webchat written in nodejs
 * express
 * ejs
 * socket.io
+* mongodb
+* body-parser
 
-# Working example
+# (Not currently) Working example
 http://lessthan3.xyz:3000
