@@ -26,9 +26,9 @@ var port = 3000;
 
 var users = [];
 var active = [];
-var log = [];
+//var log = [];
 
-var logSize = 50;
+//var logSize = 50;
 
 var standardName = 'Stranger';
 var serverName = 'Server';
@@ -58,7 +58,8 @@ io.on('connection', function(client) {
         announceUser(client, getUserByClientId(client.id), false);
 
         removeUser(client.id);
-        updateUsers(client);
+        //updateUsers(client);
+        updateUsers2();
         cleanActive(client);
     });
 
@@ -99,7 +100,8 @@ io.on('connection', function(client) {
             client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: 'Welcome to nodeChat! There are currently ' + users.length + ' users online.'});
         });
 
-        updateUsers(client);
+        //updateUsers(client);
+        updateUsers2();
         announceUser(client, user, true);
     });
 
@@ -107,25 +109,32 @@ io.on('connection', function(client) {
     client.on('messageEvent', function(data) {
         var name = getName(client);
         var messageObj = {type: 'chat', timestamp: getTimestamp(), name: name, message: data.message};
+        /*
         client.emit('chatEvent', messageObj);
         client.broadcast.emit('chatEvent', messageObj);
+        */
+        io.sockets.emit('chatEvent', messageObj);
 
         api.addHistory({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
-        updateLog({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
+        //updateLog({type: 'log', timestamp: getTimestamp(), name: name, message: data.message});
     });
 
     client.on('nameEvent', function(data) {
         var oldName = getName(client);
         changeClientName(client, data.name);
         emitName(client);
-        updateUsers(client);
+        //updateUsers(client);
+        updateUsers2();
         var newName = data.name;
         if (newName.trim() === '') {
             newName = client.id;
         }
         api.addUser({name: newName});
+        /*
         client.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
         client.broadcast.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
+        */
+        io.sockets.emit('chatEvent', {type: 'server', timestamp: getTimestamp(), name: serverName, message: oldName + ' changed name to ' + newName + '.'});
     });
 
     client.on('typeEvent', function(data) {
@@ -145,8 +154,11 @@ io.on('connection', function(client) {
             }
         }
 
+        /*
         client.emit('activeEvent', active);
         client.broadcast.emit('activeEvent', active);
+        */
+        io.sockets.emit('activeEvent', active);
     });
 
 });
@@ -159,8 +171,11 @@ function cleanActive(client) {
         }
     }
 
+    /*
     client.emit('activeEvent', active);
     client.broadcast.emit('activeEvent', active);
+    */
+    io.sockets.emit('activeEvent', active);
 }
 
 function userLeft(user) {
@@ -177,12 +192,14 @@ function getName(client) {
     return trimClientName(getUserByClientId(client.id));
 }
 
+/*
 function updateLog(obj) {
     if (log.length > logSize) {
         log.pop();
     }
     log.push(obj);
 }
+*/
 
 function emitName(client) {
     client.emit('clientName', {
@@ -216,9 +233,15 @@ function changeClientName(client, name) {
     }
 }
 
+/*
 function updateUsers(client) {
     client.broadcast.emit('usersEvent', {users: users});
     client.emit('usersEvent', {users: users});
+}
+*/
+
+function updateUsers2() {
+    io.sockets.emit('usersEvent', {users: users});
 }
 
 function announceUser(client, user, joined) {

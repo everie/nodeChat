@@ -81,7 +81,8 @@ app.get('/users/:name', function(req, res) {
 
         var collection = db.collection(settings.users);
 
-        collection.findOne({ 'name': new RegExp('^' + req.params.name, 'i') }, adminFilter(req.headers.user), function(err, data) {
+        collection.findOne({ 'name': req.params.name }, adminFilter(req.headers.user), function(err, data) {
+        //collection.findOne({ 'name': new RegExp('^' + req.params.name, 'i') }, adminFilter(req.headers.user), function(err, data) {
 
             if (data === null) {
                 res.status(404);
@@ -109,7 +110,8 @@ app.get('/history/:name', function(req, res) {
 
         var collection = db.collection(settings.history);
 
-        collection.find({ 'name': new RegExp('^' + req.params.name, 'i') }, adminFilter(req.headers.user)).toArray(function(err, data) {
+        collection.find({ 'name': req.params.name }, adminFilter(req.headers.user)).toArray(function(err, data) {
+        //collection.find({ 'name': new RegExp('^' + req.params.name, 'i') }, adminFilter(req.headers.user)).toArray(function(err, data) {
 
             if (data === null) {
                 res.status(404);
@@ -168,12 +170,24 @@ var addHistory = function(data) {
 
         var collection = db.collection(settings.history);
 
+
+        /*
         collection.insert(data, function(err, data) {
             //db.close();
         });
 
         var collection2 = db.collection(settings.users);
         collection2.updateOne({'name':data.name}, {$inc: {'messages' : 1}});
+        */
+
+
+        collection.insert(data, function(err, res) {
+            var collection2 = db.collection(settings.users);
+            collection2.updateOne({'name':data.name}, {$inc: {'messages' : 1}}, function(err, res) {
+                db.close();
+            });
+        });
+
     });
 };
 var addUser = function(data) {
